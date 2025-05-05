@@ -93,17 +93,66 @@ fi
 # Build ISO
 echo -e "${GREEN}Building Ferrari OS ISO...${NC}"
 echo -e "${BLUE}Total packages to be installed: $(echo $PACKAGES | wc -w)${NC}"
+# Add to build_iso.sh before mkarchiso
+# Verify pit setup
+if [ ! -f "$CONFIG_DIR/airootfs/usr/local/bin/pit" ]; then
+    echo -e "${RED}Error: pit wrapper not created successfully${NC}"
+    exit 1
+fi
 
+if [ ! -f "$CONFIG_DIR/airootfs/usr/share/bash-completion/completions/pit" ]; then
+    echo -e "${RED}Error: pit completion not created successfully${NC}"
+    exit 1
+fi
+
+# Verify permissions
+if [ ! -x "$CONFIG_DIR/airootfs/usr/local/bin/pit" ]; then
+    echo -e "${RED}Error: pit wrapper is not executable${NC}"
+    exit 1
+fi
+
+THREADS=$(nproc)
+MEM_GB=$(free -g | awk '/^Mem:/{print $2}')
+WORK_DIR_ORIG="$WORK_DIR"
+
+# Use tmpfs if enough RAM (>16GB)
+if [ "$MEM_GB" -gt 16 ]; then
+    echo -e "${BLUE}Using tmpfs for faster building...${NC}"
+    WORK_DIR="/tmp/archiso-tmp"
+    sudo mkdir -p "$WORK_DIR"
+    sudo mount -t tmpfs -o size=12G tmpfs "$WORK_DIR"
+    sudo chown $(whoami):$(whoami) "$WORK_DIR"
+fi
+
+# Build optimizations
+export MAKEFLAGS="-j$THREADS"
+export COMPRESSION="zstd"  # Faster than xz
+export COMPRESSION_OPTS="-T$THREADS --long=19"
+export AIROOTFS_IMAGE_TOOL_OPTIONS="-comp zstd -Xcompression-level 15"
+
+echo -e "${BLUE}Building with optimizations:${NC}"
+echo -e "${GREEN}- Using $THREADS threads${NC}"
+echo -e "${GREEN}- Using zstd compression${NC}"
+[ "$MEM_GB" -gt 16 ] && echo -e "${GREEN}- Using tmpfs workspace${NC}"
+
+# Build ISO
 mkarchiso -v \
     -w "$WORK_DIR" \
     -o "$OUT_DIR" \
     -p "$PACKAGES" \
     "$CONFIG_DIR"
 
+# Cleanup tmpfs if used
+if [ "$MEM_GB" -gt 16 ]; then
+    sudo umount "$WORK_DIR"
+    rm -rf "$WORK_DIR"
+fi
+
 # Check if build was successful
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Build completed successfully!${NC}"
     echo -e "ISO location: $OUT_DIR"
+    ls -lh "$OUT_DIR"/*.iso
 else
     echo -e "${RED}Build failed!${NC}"
     exit 1
