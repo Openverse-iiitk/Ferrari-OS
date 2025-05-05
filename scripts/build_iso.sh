@@ -121,7 +121,7 @@ if [ "$MEM_GB" -gt 16 ]; then
     WORK_DIR="/tmp/archiso-tmp"
     sudo mkdir -p "$WORK_DIR"
     sudo mount -t tmpfs -o size=12G tmpfs "$WORK_DIR"
-    sudo chown $(whoami):$(whoami) "$WORK_DIR"
+    sudo chown "$(whoami)":"$(whoami)" "$WORK_DIR"
 fi
 
 # Build optimizations
