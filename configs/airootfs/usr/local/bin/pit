@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Check for TTY and set colors accordingly
+if [ -t 1 ] && command -v tput >/dev/null; then
+    RED="$(tput bold)$(tput setaf 1)"
+    GREEN="$(tput bold)$(tput setaf 2)"
+    YELLOW="$(tput bold)$(tput setaf 3)"
+    NC="$(tput sgr0)"
+else
+    RED=""
+    GREEN=""
+    YELLOW=""
+    NC=""
+fi
+
+# TTY-friendly messages without emoji
+declare -A MESSAGES=(
+    ["Syu"]="[PIT STOP] Starting full system upgrade..."
+    ["S"]="[INSTALL] Installing new components..."
+    ["R"]="[REMOVE] Removing components..."
+    ["Ss"]="[SEARCH] Searching package catalog..."
+    ["Q"]="[LIST] Checking installed components..."
+    ["Sc"]="[CLEAN] Cleaning package cache..."
+    ["Si"]="[INFO] Getting package details..."
+)
+
+# TTY-friendly header using simple ASCII
+show_header() {
+    echo "${RED}+--------------------------------+"
+    echo "|     Ferrari Package Manager      |"
+    echo "+--------------------------------+${NC}"
+}
+
+# Show appropriate message based on operation
+show_message() {
+    local op=${1#-}
+    for key in "${!MESSAGES[@]}"; do
+        if [[ $op == *"$key"* ]]; then
+            echo "${YELLOW}${MESSAGES[$key]}${NC}"
+            return
+        fi
+    done
+    echo "${YELLOW}[PIT] Executing operation...${NC}"
+}
+
+# Show usage if no arguments provided
+if [ $# -eq 0 ]; then
+    show_header
+    echo "${GREEN}Usage: pit <operation> [options] [targets]${NC}"
+    echo ""
+    echo "Operations:"
+    echo "  -Syu         Full system upgrade"
+    echo "  -S package   Install a package"
+    echo "  -R package   Remove a package"
+    echo "  -Ss name     Search for packages"
+    echo "  -Sc         Clean package cache"
+    echo "  -Si package  Show package info"
+    echo "  -Q          List installed packages"
+    exit 1
+fi
+
+show_header
+show_message "$1"
+
+# Execute pacman with all arguments
+exec pacman "$@"
