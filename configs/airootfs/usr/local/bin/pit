@@ -34,12 +34,21 @@ show_header() {
 # Show appropriate message based on operation
 show_message() {
     local op=${1#-}
+
+    # Try exact match first
+    if [[ -n "${MESSAGES[$op]}" ]]; then
+        echo "${YELLOW}${MESSAGES[$op]}${NC}"
+        return
+    fi
+
+    # Fall back to partial match if needed
     for key in "${!MESSAGES[@]}"; do
-        if [[ $op == *"$key"* ]]; then
+        if [[ $op == "$key"* ]]; then
             echo "${YELLOW}${MESSAGES[$key]}${NC}"
             return
         fi
     done
+
     echo "${YELLOW}[PIT] Executing operation...${NC}"
 }
 
