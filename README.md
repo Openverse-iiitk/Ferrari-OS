@@ -18,15 +18,17 @@
 
 ## 🛠️ Build Instructions
 Clone and build Ferrari OS ISO using ArchISO:
+Run `sudo pacman -Syu` . Then,
 
 ```bash
 git clone https://github.com/Openverse-iiitk/Ferrari-OS.git
 cd Ferrari-OS
 sudo pacman -S archiso
-./scripts/build_iso.sh
+sudo ./scripts/build_iso.sh
 ```
 
 Test using QEMU:
+You can download qemu [here](https://www.qemu.org/download/). It's similar to virtual box and vmware. More native support for kernel-based virtual machines. You can also install virt-manager to run qemu with friendly gui. Or use the cli way as below.
 ```bash
 qemu-system-x86_64 -m 4G -boot d -cdrom out/Ferrari-OS.iso
 ```

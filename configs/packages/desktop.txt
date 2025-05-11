@@ -14,7 +14,7 @@ polkit-gnome          # PolicyKit integration for GNOME
 
 # Essential Applications
 kitty                 # GPU-accelerated terminal emulator
-thunar                # Modern file manager
+dolphin               # Modern file manager
 firefox               # Web browser
 
 # System Controls
